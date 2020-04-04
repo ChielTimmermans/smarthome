@@ -1,0 +1,5 @@
+.vscode
+/qrlink
+/files/media/*
+config.toml
+*.qtpl.go

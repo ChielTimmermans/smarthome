@@ -1,0 +1,8 @@
+openapi: 3.0.0
+info:
+  title: smarthome-home
+  description: API documentation for smarthome-home
+  version: 0.1.0
+servers:
+  - url: http://localhost:20000
+    description: Local development server for testing

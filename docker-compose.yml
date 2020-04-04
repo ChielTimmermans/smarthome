@@ -1,0 +1,61 @@
+version: "3"
+
+# Define services
+services:
+  # App Service
+  app:
+    # Configuration for building the docker image for the service
+    image: smarthome-home:latest
+    ports:
+      - "20000:8080" # Forward the exposed port 8080 on the container to port 8080 on the host machine
+    restart: unless-stopped
+    volumes:
+      - ./:/smarthome-home
+    depends_on:
+      - db # This service depends on db. Start that first.
+    networks: # Networks to join (Services on the same network can communicate with each other using their name)
+      - backend
+
+  # DB Service
+  db:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: "smarthome" 
+      # So you don't have to use root, but you can if you like
+      MYSQL_USER: "user"
+      # You can use whatever password you like
+      MYSQL_PASSWORD: "password"
+      # Password for root access
+      MYSQL_ROOT_PASSWORD: "password"
+    volumes:
+      - dbdata:/var/lib/mysql
+    networks:
+      - backend
+
+  swagger-editor:
+    image: swaggerapi/swagger-editor
+    ports:
+      - "20002:8080"
+
+  swagger-ui:
+    image: swaggerapi/swagger-ui
+    ports:
+      - "20003:8080"
+    volumes:
+      - ./docs:/docs
+    environment:
+      SWAGGER_JSON: /docs/openapi.yaml
+
+  swagger-api:
+    image: stoplight/prism:3
+    ports:
+      - "20001:4010"
+    volumes:
+      - ./docs:/docs
+    command: mock -d -h 0.0.0.0 "/docs/openapi.yaml"
+
+networks:
+  backend:
+volumes:
+  dbdata:

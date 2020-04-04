@@ -1,0 +1,78 @@
+kind: pipeline
+name: default
+
+steps:
+  - name: lint
+    image: golangci/golangci-lint:v1.21
+    commands:
+      - go get -u github.com/valyala/quicktemplate/qtc
+      - qtc -skipLineComments
+      - golangci-lint run
+
+  - name: test
+    image: golang:1.13
+    commands:
+      - go test -v ./...
+
+  - name: build-push-prod
+    image: plugins/docker
+    settings:
+      registry: docker.aceboard.nl
+      repo: docker.aceboard.nl/${DRONE_REPO_NAME}
+      tags:
+        - latest
+        - ${DRONE_SEMVER}
+      purge: true
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
+      build_args:
+        - API_URL=https://api.qrlink.nl
+        - APP_URL=https://qrlink.nl
+    when:
+      branch:
+        - master
+      event: push
+
+  - name: build-push-dev
+    image: plugins/docker
+    settings:
+      registry: docker.aceboard.nl
+      repo: docker.aceboard.nl/${DRONE_REPO_NAME}
+      tags:
+        - latest-dev
+        - ${DRONE_COMMIT_SHA}-dev
+      purge: true
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
+      build_args:
+        - API_URL=https://api.qrlink.nl
+        - APP_URL=https://qrlink.nl
+    when:
+      branch:
+        - dev
+      event: push
+
+  - name: build-push-acc
+    image: plugins/docker
+    settings:
+      registry: docker.aceboard.nl
+      repo: docker.aceboard.nl/${DRONE_REPO_NAME}
+      tags:
+        - latest-acc
+        - ${DRONE_SEMVER}-${DRONE_COMMIT_SHA}-acc
+      purge: true
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
+      build_args:
+        - API_URL=https://api.qrlink.nl
+        - APP_URL=https://qrlink.nl
+    when:
+      branch:
+        - release/*
+      event: push

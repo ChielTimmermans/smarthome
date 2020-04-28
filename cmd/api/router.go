@@ -30,6 +30,7 @@ func initRouter(s *fasthttp.Server, h *Handler, config *ConfigRouter, configCORS
 }
 
 func initRoutes(r *router.Router, h *Handler) {
+	// test
 	log.Println(h.user)
 	r.GET("/login", h.user.Login)
 }

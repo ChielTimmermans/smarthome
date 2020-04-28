@@ -1,6 +1,7 @@
 package json
 
 import (
+	"smarthome-home/internal"
 	"smarthome-home/internal/domain/accesstoken"
 	"smarthome-home/internal/domain/middleware"
 
@@ -8,14 +9,16 @@ import (
 )
 
 type middlewareHandler struct {
-	answer  *Answer
-	service middleware.Servicer
+	answer            *Answer
+	service           middleware.Servicer
+	servicesAvailable *internal.ServicesAvailable
 }
 
-func NewMiddleware(service middleware.Servicer, a *Answer) (middleware.Handler, error) {
+func NewMiddleware(service middleware.Servicer, a *Answer, sa *internal.ServicesAvailable) (middleware.Handler, error) {
 	return &middlewareHandler{
-		service: service,
-		answer:  a,
+		service:           service,
+		answer:            a,
+		servicesAvailable: sa,
 	}, nil
 }
 func (h *middlewareHandler) AccessControl(next fasthttp.RequestHandler, roles ...string) fasthttp.RequestHandler {
@@ -32,6 +35,26 @@ func (h *middlewareHandler) AccessControl(next fasthttp.RequestHandler, roles ..
 			return
 		}
 		ctx.SetUserValue("user", u)
+		next(ctx)
+	}
+}
+
+func (h *middlewareHandler) AvailableServices(next fasthttp.RequestHandler, services ...string) fasthttp.RequestHandler {
+	return func(ctx *fasthttp.RequestCtx) {
+		for _, k := range services {
+			if k == middleware.DB {
+				if !h.servicesAvailable.DB {
+					ctx.SetStatusCode(fasthttp.StatusInternalServerError)
+					return
+				}
+			}
+			if k == middleware.MINIO {
+				if !h.servicesAvailable.MINIO {
+					ctx.SetStatusCode(fasthttp.StatusInternalServerError)
+					return
+				}
+			}
+		}
 		next(ctx)
 	}
 }

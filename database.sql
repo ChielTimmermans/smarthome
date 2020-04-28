@@ -14,10 +14,11 @@ create table users (
 )ENGINE=INNODB DEFAULT COLLATE UTF8_GENERAL_CI;
  
 CREATE TABLE access_tokens (
-    user_id INT PRIMARY KEY NOT NULL AUTO_INCREMENT,
+    user_id INT NOT NULL,
     token VARCHAR(20) BINARY NOT NULL,
-    role ENUM('user', 'customeradmin', 'admin') NOT NULL,
+    role ENUM('user', 'admin') NOT NULL,
     expires_at TIMESTAMP NOT NULL,
+    PRIMARY KEY (token),
 
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 )ENGINE=INNODB DEFAULT COLLATE UTF8_GENERAL_CI;

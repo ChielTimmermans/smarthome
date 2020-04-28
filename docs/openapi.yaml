@@ -6,3 +6,239 @@ info:
 servers:
   - url: http://localhost:20000
     description: Local development server for testing
+
+components:
+  schemas:
+    ULID:
+      type: string
+      format: ulid
+      description: ULID of account
+      example: 01E33D2JTGT48E9YVZ3Y0H2RFB
+      readOnly: true
+
+    ErrorCode:
+      type: string
+      description: >
+        Application specific error code:
+         * `account_not_found` - Account not found, this account could not be found.
+         * `coin_balance_insufficient` - Insufficient coin balance, this account does not have sufficient coin balance to buy this item.
+      enum:
+        - "account_not_found"
+        - "insufficient_coins"
+
+    HTTPStatusCode:
+      type: string
+      description: >
+        HTTP status code:
+         * `200` - OK, the request has succeeded.
+         * `201` - Created, the request has been fulfilled and resulted in a new resource being created. 
+         * `204` - No Content, The server has fulfilled the request but does not need to return an entity-body, for example when a DELETE request is executed there is no content to return.
+         * `304` - Not Modified, the resource has not been modified since last requested.
+         * `400` - Bad Request, the request was unacceptable, often due to missing a required parameter.
+         * `401` - Unauthorized, no valid API key provided.
+         * `403` - Forbidden, the API key doesn't have permissions to perform the request.
+         * `404` - Not Found, the requested resource doesn't exist.
+         * `409` - Conflict, the request conflicts with another request.
+         * `413` - Request Entity Too Large, the server refuses to handle this request because it is too large.
+         * `429` - Too Many Requests, too many requests hit the API too quickly. 
+         * `500` - Internal Server Error, something went wrong on seat manager's end.
+         * `502` - Bad Gateway, the server, while acting as a gateway or proxy, received an invalid response from the upstream server it accessed in attempting to fulfill the request.
+         * `503` - Service Unavailable, the server is currently unable to handle the request due to a temporary overloading or maintenance of the server.
+         * `504` - Gateway Timeout, the server, while acting as a gateway or proxy, did not receive a timely response from the upstream server.
+      example: "404"
+      enum:
+        - "200"
+        - "201"
+        - "204"
+        - "304"
+        - "400"
+        - "401"
+        - "403"
+        - "404"
+        - "409"
+        - "413"
+        - "429"
+        - "500"
+        - "502"
+        - "503"
+        - "504"
+
+    Error:
+      type: object
+      description: When a server encounters multiple problems for a single request, the most generally applicable HTTP error code SHOULD be used in the response. For instance, 400 Bad Request might be appropriate for multiple 4xx errors or 500 Internal Server Error might be appropriate for multiple 5xx errors.
+      properties:
+        code:
+          $ref: "#/components/schemas/ErrorCode"
+        title:
+          type: string
+          description: A short, human-readable summary of the problem that SHOULD NOT change from occurrence to occurrence of the problem, except for purposes of localization.
+          example: "Account not found"
+          minLength: 0
+          maxLength: 50
+        detail:
+          type: string
+          description: A human-readable explanation specific to this occurrence, can be localized.
+          example: "This account could not be found."
+          minLength: 0
+          maxLength: 500
+        source:
+          type: object
+          properties:
+            pointer:
+              type: string
+              description: A JSON Pointer to the associated entity in the request document
+              example: "/data/account/username"
+              minLength: 0
+              maxLength: 100
+            parameter:
+              type: string
+              description: A string indicating which URI query parameter caused the error
+              example: "filter"
+              minLength: 0
+              maxLength: 50
+
+  requestBodies:
+    login:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - email
+              - password
+              - keepSignedIn
+            properties:
+              email:
+                type: string
+                format: email
+                maxLength: 255
+                description: Email of account
+                example: chieltimmermans@hotmail.com
+              password:
+                type: string
+                format: password
+                maxLength: 50
+                description: Password of account
+                example: "test1234"
+              keepSignedIn:
+                type: boolean
+                description: Keep account signed in
+                example: true
+
+  responses:
+    Error:
+      description: Error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              id:
+                $ref: "#/components/schemas/ULID"
+                description: A unique identifier for this paricular occurrence of the problem
+                readOnly: true
+              status:
+                $ref: "#/components/schemas/HTTPStatusCode"
+              errors:
+                type: array
+                description: Array of error objects, contains all errors of this request
+                items:
+                  $ref: "#/components/schemas/Error"
+
+  parameters:
+    relayID:
+      in: path
+      required: true
+      name: relayID
+      schema:
+        $ref: "#/components/schemas/ULID"
+      description: ID of relay
+
+    itemID:
+      in: path
+      required: true
+      name: itemID
+      schema:
+        $ref: "#/components/schemas/ULID"
+      description: ID of item
+
+  securitySchemes:
+    ApiKeyHeaderAuth:
+      type: apiKey
+      name: X-API-KEY
+      in: header
+    ApiKeyCookieAuth:
+      type: apiKey
+      name: X-API-KEY
+      in: cookie
+
+paths:
+  /login:
+    post:
+      description: Login to get API key
+      security: []
+      requestBody:
+        $ref: "#/components/requestBodies/login"
+      tags:
+        - Authentication
+      responses:
+        "200":
+          description: >
+            Successfully authenticated.
+            The api key is returned in a cookie named `X-API-KEY`. You need to include this cookie in subsequent requests.
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: X-API-KEY=Kg6kwXnFYuD2YYG4; Path=/; HttpOnly; Expires=Tue, 14 Jan 2020 17:48:56 GMT;
+        default:
+          $ref: "#/components/responses/Error"
+
+  /relay/{relayID}/item/{itemID}/enable:
+    parameters:
+      - $ref: "#/components/parameters/relayID"
+      - $ref: "#/components/parameters/itemID"
+    put:
+      description: Enable an item on a relay
+      security:
+        - ApiKeyHeaderAuth: [admin, user]
+      tags:
+        - Relay
+      responses:
+        "204":
+          description: No Content
+        default:
+          $ref: "#/components/responses/Error"
+
+  /relay/{relayID}/item/{itemID}/disable:
+    parameters:
+      - $ref: "#/components/parameters/relayID"
+      - $ref: "#/components/parameters/itemID"
+    put:
+      description: Disable an item on a relay
+      security:
+        - ApiKeyHeaderAuth: [admin, user]
+      tags:
+        - Relay
+      responses:
+        "204":
+          description: No Content
+        default:
+          $ref: "#/components/responses/Error"
+
+  /relay/{relayID}/item/{itemID}/toggle:
+    parameters:
+      - $ref: "#/components/parameters/relayID"
+      - $ref: "#/components/parameters/itemID"
+    put:
+      description: Toggle an item on a relay
+      security:
+        - ApiKeyHeaderAuth: [admin, user]
+      tags:
+        - Relay
+      responses:
+        "204":
+          description: No Content
+        default:
+          $ref: "#/components/responses/Error"

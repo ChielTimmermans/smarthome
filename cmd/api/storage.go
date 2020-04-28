@@ -7,6 +7,7 @@ import (
 	"log"
 	"smarthome-home/internal"
 	"smarthome-home/internal/domain/accesstoken"
+	"smarthome-home/internal/domain/relay"
 	"smarthome-home/internal/domain/user"
 	"smarthome-home/internal/storage/mysql"
 	"time"
@@ -17,6 +18,7 @@ import (
 type Storage struct {
 	user        user.Storager
 	accessToken accesstoken.Storager
+	relay       relay.Storager
 }
 
 const (
@@ -44,6 +46,9 @@ func initDatabase(config *ConfigStorageMySQL, s *Storage, databaseMode string, s
 			return err
 		}
 		if s.accessToken, err = mysql.NewAccessToken(dbs); err != nil {
+			return err
+		}
+		if s.relay, err = mysql.NewRelay(dbs); err != nil {
 			return err
 		}
 

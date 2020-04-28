@@ -28,8 +28,8 @@ steps:
       password:
         from_secret: docker_password
       build_args:
-        - API_URL=https://api.qrlink.nl
-        - APP_URL=https://qrlink.nl
+        - API_URL=https://api.smarthome.nl
+        - APP_URL=https://smarthome.nl
     when:
       branch:
         - master
@@ -49,8 +49,8 @@ steps:
       password:
         from_secret: docker_password
       build_args:
-        - API_URL=https://api.qrlink.nl
-        - APP_URL=https://qrlink.nl
+        - API_URL=https://api.smarthome.nl
+        - APP_URL=https://smarthome.nl
     when:
       branch:
         - dev
@@ -70,8 +70,8 @@ steps:
       password:
         from_secret: docker_password
       build_args:
-        - API_URL=https://api.qrlink.nl
-        - APP_URL=https://qrlink.nl
+        - API_URL=https://api.smarthome.nl
+        - APP_URL=https://smarthome.nl
     when:
       branch:
         - release/*

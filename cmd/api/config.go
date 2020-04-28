@@ -24,15 +24,23 @@ type Config struct {
 	Mail   *ConfigMail
 	Router *ConfigRouter
 
-	DBMySQL *ConfigStorageMySQL
-
-	URL struct {
+	DBMySQL  *ConfigStorageMySQL
+	PushMQTT *ConfigMQTT
+	URL      struct {
 		App       string
 		Dashboard string
 	}
 	Security struct {
 		Hash string
 	}
+}
+
+type ConfigMQTT struct {
+	Protocol string
+	Host     string
+	Port     int
+	UserName string
+	Password string
 }
 
 type ConfigRouter struct {

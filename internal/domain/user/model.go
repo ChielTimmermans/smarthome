@@ -5,6 +5,7 @@ import (
 
 	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/go-ozzo/ozzo-validation/is"
+	"github.com/go-sql-driver/mysql"
 )
 
 const (
@@ -16,6 +17,9 @@ const (
 	PasswordLengthMax = 50
 	HashLengthMin     = 30
 	HashLengthMax     = 30
+
+	USER  = "user"
+	ADMIN = "admin"
 )
 
 type JSON struct {
@@ -42,7 +46,7 @@ type MySQL struct {
 	Password  string
 	Email     string
 	Role      string
-	CreatedAt time.Time
+	CreatedAt mysql.NullTime
 }
 
 func (j *JSON) ToService() *Service {
@@ -68,24 +72,30 @@ func (s *Service) ToJSON() *JSON {
 }
 
 func (p *MySQL) ToService() *Service {
-	return &Service{
-		ID:        p.ID,
-		Name:      p.Name,
-		Password:  p.Password,
-		Email:     p.Email,
-		Role:      p.Role,
-		CreatedAt: p.CreatedAt,
+	s := &Service{
+		ID:       p.ID,
+		Name:     p.Name,
+		Password: p.Password,
+		Email:    p.Email,
+		Role:     p.Role,
 	}
+	if p.CreatedAt.Valid {
+		s.CreatedAt = p.CreatedAt.Time
+	}
+	return s
 }
 
 func (s *Service) ToMySQL() *MySQL {
 	return &MySQL{
-		ID:        s.ID,
-		Name:      s.Name,
-		Password:  s.Password,
-		Email:     s.Email,
-		Role:      s.Role,
-		CreatedAt: s.CreatedAt,
+		ID:       s.ID,
+		Name:     s.Name,
+		Password: s.Password,
+		Email:    s.Email,
+		Role:     s.Role,
+		CreatedAt: mysql.NullTime{
+			Time:  s.CreatedAt,
+			Valid: true,
+		},
 	}
 }
 

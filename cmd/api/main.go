@@ -20,12 +20,16 @@ func main() {
 	if storage, err = initStorage(config.DBMySQL, "mysql", sa); err != nil {
 		log.Fatal(err)
 	}
+	var push *Push
+	if push, err = initPusher(config.PushMQTT, "paho", sa); err != nil {
+		log.Fatal(err)
+	}
 	var service *Service
-	if service, err = initService(storage, config.Security.Hash); err != nil {
+	if service, err = initService(storage, push, config.Security.Hash); err != nil {
 		log.Fatal(err)
 	}
 	var handler *Handler
-	if handler, err = initHandler(service); err != nil {
+	if handler, err = initHandler(service, sa); err != nil {
 		log.Fatal(err)
 	}
 
@@ -44,5 +48,7 @@ func main() {
 	initRouter(server, handler, config.Router, config.CORS)
 
 	log.Printf("Starting up smarthome-home back-end, listening on port: %d\n", config.Server.Port)
-	log.Fatal(server.ListenAndServe(fmt.Sprintf(":%d", config.Server.Port)))
+	if err := server.ListenAndServe(fmt.Sprintf(":%d", config.Server.Port)); err != nil {
+		log.Fatal(err)
+	}
 }

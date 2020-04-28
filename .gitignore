@@ -1,5 +1,5 @@
 .vscode
-/qrlink
+/smarthome-home
 /files/media/*
 config.toml
 *.qtpl.go

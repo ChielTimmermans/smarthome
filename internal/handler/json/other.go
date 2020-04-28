@@ -1,10 +1,12 @@
 package json
 
 import (
+	"errors"
 	"log"
 	"regexp"
 	"smarthome-home/internal"
 	"smarthome-home/internal/domain/errormessage"
+	"strconv"
 	"strings"
 
 	jsoniter "github.com/json-iterator/go"
@@ -163,4 +165,16 @@ func getRequestID(ctx *fasthttp.RequestCtx) []byte {
 		requestID = []byte("\"request ID not found\"")
 	}
 	return requestID
+}
+
+func getID(ctx *fasthttp.RequestCtx, parameter string) (id int, err error) {
+	parameterID, ok := ctx.UserValue(parameter).(string)
+	if !ok {
+		return 0, errors.New("interface error")
+	}
+	if id, err = strconv.Atoi(parameterID); err != nil {
+		log.Println(err)
+		return 0, errors.New("not a number")
+	}
+	return
 }

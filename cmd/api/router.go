@@ -2,6 +2,8 @@ package main
 
 import (
 	"log"
+	"smarthome-home/internal/domain/middleware"
+	"smarthome-home/internal/domain/user"
 
 	"github.com/fasthttp/router"
 	"github.com/valyala/fasthttp"
@@ -21,7 +23,7 @@ func initRouter(s *fasthttp.Server, h *Handler, config *ConfigRouter, configCORS
 
 	CORS := initCors(configCORS)
 
-	s.Handler = CORS.CorsMiddleware(s.Handler)
+	s.Handler = CORS.CorsMiddleware(r.Handler)
 
 	initRoutes(r, h)
 	log.Println("Init router done")
@@ -30,9 +32,17 @@ func initRouter(s *fasthttp.Server, h *Handler, config *ConfigRouter, configCORS
 }
 
 func initRoutes(r *router.Router, h *Handler) {
+	ac := h.middleware.AccessControl
+	as := h.middleware.AvailableServices
 	// test
-	log.Println(h.user)
-	r.GET("/login", h.user.Login)
+	r.POST("/login", as(h.user.Login, middleware.DB))
+	r.PUT("/relay/:relayID/item/:itemID/enable", ac(as(h.relay.Enable, middleware.DB), user.USER, user.ADMIN))
+	r.PUT("/relay/:relayID/item/:itemID/disable", ac(as(h.relay.Disable, middleware.DB), user.USER, user.ADMIN))
+	r.PUT("/relay/:relayID/item/:itemID/toggle", ac(as(h.relay.Toggle, middleware.DB), user.USER, user.ADMIN))
+
+	r.GET("/", func(ctx *fasthttp.RequestCtx) {
+		log.Println("hi")
+	})
 }
 
 func initCors(config *ConfigCORS) (corsHandler *cors.CorsHandler) {

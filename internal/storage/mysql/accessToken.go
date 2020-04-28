@@ -17,7 +17,7 @@ func NewAccessToken(dbs *DBs) (accesstoken.Storager, error) {
 
 func (s *accessTokenStorage) Create(at *accesstoken.Service) error {
 	atp := at.ToMySQL()
-	if _, err := s.dbs.Master.Exec(`INSERT INTO access_tokens (user_id, token, role, expires_at) VALUES (?,?,?,?,?)`,
+	if _, err := s.dbs.Master.Exec(`INSERT INTO access_tokens (user_id, token, role, expires_at) VALUES (?,?,?,?)`,
 		atp.UserID, atp.Token, atp.Role, atp.ExpiresAT); err != nil {
 		return err
 	}

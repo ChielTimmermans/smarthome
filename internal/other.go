@@ -24,6 +24,7 @@ func ConcatBytes(values ...[]byte) []byte {
 type ServicesAvailable struct {
 	DB    bool
 	MINIO bool
+	MQTT  bool
 }
 
 func GetRandomChars(n int) (string, error) {
